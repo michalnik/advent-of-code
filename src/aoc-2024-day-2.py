@@ -20,6 +20,16 @@ class EvaluateSimilarityScore(typing.Protocol):
     def __call__(self, locations: Locations) -> SimilarityScore: ...
 
 
+def evaluate_similarity_score_by_count(locations: Locations) -> SimilarityScore:
+    similarity_score: SimilarityScore = 0
+    if isinstance(locations, dict):
+        for value in locations["first"]:
+            similarity_score += value * locations["second"].count(value)
+        return similarity_score
+    else:
+        raise TypeError("Wrong locations passed - wrong type")
+
+
 def main(args: argparse.Namespace):
     similarity_score: SimilarityScore
 
@@ -34,6 +44,8 @@ def main(args: argparse.Namespace):
 
     evaluate_similarity_score: EvaluateSimilarityScore
     match args.mode:
+        case "count":
+            evaluate_similarity_score = evaluate_similarity_score_by_count
         case _:
 
             def evaluate(locations: Locations) -> SimilarityScore:
@@ -52,7 +64,7 @@ if __name__ == "__main__":
     parser.add_argument("file_path", type=validate_file_path, help="Existing file path")
     parser.add_argument(
         "--mode",
-        choices=["numpy"],
+        choices=["numpy", "count"],
         default="numpy",
         help="Mode of evaluation: numpy (default: numpy)",
     )
