@@ -33,9 +33,9 @@ def read_file(file: FilePath) -> GatheredLocations:
     with open(file) as file_handler:
         for line in file_handler.readlines():
             locations = list(
-                part for part in (
-                    int(line_part) if bool(line_part.strip()) else None for line_part in line.split(" ")
-                ) if part is not None
+                part
+                for part in (int(line_part) if bool(line_part.strip()) else None for line_part in line.split(" "))
+                if part is not None
             )
             _first.append(locations[0])
             _second.append(locations[1])
@@ -64,14 +64,9 @@ if __name__ == "__main__":
         "--mode",
         choices=["comprehension", "functional", "numpy"],
         default="comprehension",
-        help="Mode of evaluation: comprehension, functional or numpy (default: comprehension)"
+        help="Mode of evaluation: comprehension, functional or numpy (default: comprehension)",
     )
-    parser.add_argument(
-        "--rows",
-        type=int,
-        default=10,
-        help="Number of rows of profiler stats to print"
-    )
+    parser.add_argument("--rows", type=int, default=10, help="Number of rows of profiler stats to print")
     args = parser.parse_args()
     print("These input arguments were received: ", args)
 
@@ -79,6 +74,8 @@ if __name__ == "__main__":
 
     with cProfile.Profile() as profile:
         if args.mode == "numpy":
+            # TODO: consider to move to 2 functions as it is for other modes - reading data, processing data
+            #       but it seems there is no need for that (no performance touch)
             data = np.loadtxt(args.file_path, dtype=int)
             first, second = data[:, 0], data[:, 1]
             total_distance = np.sum(np.abs(np.sort(first) - np.sort(second)))
