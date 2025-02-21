@@ -1,64 +1,78 @@
-import typing
 import argparse
-import os
-import sys
-import pstats
-import cProfile
+import typing
 from rich import print
 import numpy as np
 
+from utils import (
+    Locations,
+    ReadingLocations,
+    read_and_parse_file,
+    validate_file_path,
+    create_arg_parser,
+    parse_args_run_and_profile,
+    np_load_data,
+)
 
-FilePath: typing.TypeAlias = str
-LocationList: typing.TypeAlias = list[int]
-DistanceList: typing.TypeAlias = list[int]
+
 TotalDistance: typing.TypeAlias = int
 
 
-class GatheredLocations(typing.TypedDict):
-    first: LocationList
-    second: LocationList
-
-
-class ReadingLocations(typing.Protocol):
-    def __call__(self, file: FilePath) -> GatheredLocations: ...
-
-
 class EvaluateTotalDistance(typing.Protocol):
-    def __call__(self, locations: GatheredLocations) -> TotalDistance: ...
+    def __call__(self, locations: Locations) -> TotalDistance: ...
 
 
-def read_file(file: FilePath) -> GatheredLocations:
-    _first: LocationList = []
-    _second: LocationList = []
-    with open(file) as file_handler:
-        for line in file_handler.readlines():
-            locations = list(
-                part
-                for part in (int(line_part) if bool(line_part.strip()) else None for line_part in line.split(" "))
-                if part is not None
-            )
-            _first.append(locations[0])
-            _second.append(locations[1])
-
-    return GatheredLocations(first=_first, second=_second)
+def sort_locations(locs: Locations):
+    locs["first"].sort()
+    locs["second"].sort()
 
 
-def evaluate_total_distance_by_comprehension(locations: GatheredLocations) -> TotalDistance:
+def evaluate_total_distance_by_comprehension(locations: Locations) -> TotalDistance:
+    sort_locations(locations)
     return sum(abs(_first - _second) for _first, _second in zip(locations["first"], locations["second"]))
 
 
-def evaluate_total_distance_by_functional(locations: GatheredLocations) -> TotalDistance:
+def evaluate_total_distance_by_functional(locations: Locations) -> TotalDistance:
+    sort_locations(locations)
     return sum(map(lambda left, right: abs(left - right), locations["first"], locations["second"]))
 
 
-def validate_file_path(path: str) -> str:
-    if not os.path.isfile(path):
-        raise argparse.ArgumentTypeError(f"File '{path}' does not exist or it is not a file.")
-    return path
+def evaluate_total_distance_by_numpy(locations: Locations) -> TotalDistance:
+    if isinstance(locations, np.ndarray):
+        first, second = locations[:, 0], locations[:, 1]
+        return np.sum(np.abs(np.sort(first) - np.sort(second)))
+    else:
+        # just return error distance
+        return -1
+
+
+def main(args: argparse.Namespace):
+    total_distance: TotalDistance
+
+    read_locations: ReadingLocations
+    match args.mode:
+        case "numpy":
+            read_locations = np_load_data
+        case _:
+            read_locations = read_and_parse_file
+
+    locs: Locations = read_locations(args.file_path)
+
+    evaluate_total_distance: EvaluateTotalDistance
+    match args.mode:
+        case "numpy":
+            evaluate_total_distance = evaluate_total_distance_by_numpy
+        case "functional":
+            evaluate_total_distance = evaluate_total_distance_by_functional
+        case _:
+            evaluate_total_distance = evaluate_total_distance_by_comprehension
+
+    total_distance = evaluate_total_distance(locs)
+
+    print(f"Total distance evaluated by <{args.mode}>: ", total_distance)
 
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Evaluation of 2 paths(list of locations) - total length.")
+    parser: argparse.ArgumentParser = create_arg_parser("Evaluation of 2 paths(list of locations) - total length.")
     parser.add_argument("file_path", type=validate_file_path, help="Existing file path")
     parser.add_argument(
         "--mode",
@@ -66,38 +80,5 @@ if __name__ == "__main__":
         default="comprehension",
         help="Mode of evaluation: comprehension, functional or numpy (default: comprehension)",
     )
-    parser.add_argument("--rows", type=int, default=10, help="Number of rows of profiler stats to print")
-    args = parser.parse_args()
-    print("These input arguments were received: ", args)
 
-    total_distance: TotalDistance
-
-    with cProfile.Profile() as profile:
-        if args.mode == "numpy":
-            # TODO: consider to move to 2 functions as it is for other modes - reading data, processing data
-            #       but it seems there is no need for that (no performance touch)
-            data = np.loadtxt(args.file_path, dtype=int)
-            first, second = data[:, 0], data[:, 1]
-            total_distance = np.sum(np.abs(np.sort(first) - np.sort(second)))
-        else:
-            read_locations: ReadingLocations = read_file
-            locs: GatheredLocations = read_locations(args.file_path)
-            locs["first"].sort()
-            locs["second"].sort()
-
-            evaluate_total_distance: EvaluateTotalDistance
-            match args.mode:
-                case "functional":
-                    evaluate_total_distance = evaluate_total_distance_by_functional
-                case _:
-                    evaluate_total_distance = evaluate_total_distance_by_comprehension
-
-            total_distance = evaluate_total_distance(locs)
-
-    print(f"Total distance evaluated by <{args.mode}>: ", total_distance)
-
-    print("\nUsing cProfile ...")
-    stats = pstats.Stats(profile)
-    stats.strip_dirs().sort_stats("time").print_stats(args.rows)
-
-    sys.exit(0)
+    parse_args_run_and_profile(parser, main)
