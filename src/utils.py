@@ -69,3 +69,11 @@ def read_and_parse_file(file: FilePath) -> Locations:
 
 def np_load_data(file: FilePath) -> Locations:
     return np.loadtxt(file, dtype=int)
+
+
+def sort_locations(locs: Locations):
+    if isinstance(locs, dict):
+        locs["first"].sort()
+        locs["second"].sort()
+    else:
+        raise TypeError("Wrong locations passed - wrong type")

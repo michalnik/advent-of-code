@@ -11,6 +11,7 @@ from utils import (
     ReadingLocations,
     read_and_parse_file,
     np_load_data,
+    sort_locations,
 )
 
 
@@ -19,14 +20,6 @@ TotalDistance: typing.TypeAlias = int
 
 class EvaluateTotalDistance(typing.Protocol):
     def __call__(self, locations: Locations) -> TotalDistance: ...
-
-
-def sort_locations(locs: Locations):
-    if isinstance(locs, dict):
-        locs["first"].sort()
-        locs["second"].sort()
-    else:
-        raise TypeError("Wrong locations passed - wrong type")
 
 
 def evaluate_total_distance_by_comprehension(locations: Locations) -> TotalDistance:
