@@ -4,12 +4,12 @@ from rich import print
 import numpy as np
 
 from utils import (
-    Locations,
-    ReadingLocations,
-    read_and_parse_file,
     validate_file_path,
     create_arg_parser,
     parse_args_run_and_profile,
+    Locations,
+    ReadingLocations,
+    read_and_parse_file,
     np_load_data,
 )
 
@@ -22,18 +22,29 @@ class EvaluateTotalDistance(typing.Protocol):
 
 
 def sort_locations(locs: Locations):
-    locs["first"].sort()
-    locs["second"].sort()
+    if isinstance(locs, dict):
+        locs["first"].sort()
+        locs["second"].sort()
+    else:
+        raise TypeError("Wrong locations passed - wrong type")
 
 
 def evaluate_total_distance_by_comprehension(locations: Locations) -> TotalDistance:
     sort_locations(locations)
-    return sum(abs(_first - _second) for _first, _second in zip(locations["first"], locations["second"]))
+    if isinstance(locations, dict):
+        return sum(abs(_first - _second) for _first, _second in zip(locations["first"], locations["second"]))
+    else:
+        # just return error distance
+        raise TypeError("Wrong locations passed - wrong type")
 
 
 def evaluate_total_distance_by_functional(locations: Locations) -> TotalDistance:
     sort_locations(locations)
-    return sum(map(lambda left, right: abs(left - right), locations["first"], locations["second"]))
+    if isinstance(locations, dict):
+        return sum(map(lambda left, right: abs(left - right), locations["first"], locations["second"]))
+    else:
+        # just return error distance
+        raise TypeError("Wrong locations passed - wrong type")
 
 
 def evaluate_total_distance_by_numpy(locations: Locations) -> TotalDistance:
@@ -42,7 +53,7 @@ def evaluate_total_distance_by_numpy(locations: Locations) -> TotalDistance:
         return np.sum(np.abs(np.sort(first) - np.sort(second)))
     else:
         # just return error distance
-        return -1
+        raise TypeError("Wrong locations passed - wrong type")
 
 
 def main(args: argparse.Namespace):
