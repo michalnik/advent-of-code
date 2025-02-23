@@ -51,7 +51,7 @@ class ReadingLocations(typing.Protocol):
     def __call__(self, file: FilePath) -> Locations: ...
 
 
-def read_and_parse_file(file: FilePath) -> Locations:
+def read_locations_from_file(file: FilePath) -> Locations:
     _first: LocationList = []
     _second: LocationList = []
     with open(file) as file_handler:
@@ -67,7 +67,7 @@ def read_and_parse_file(file: FilePath) -> Locations:
     return GatheredLocations(first=_first, second=_second)
 
 
-def np_load_data(file: FilePath) -> Locations:
+def numpy_read_locations(file: FilePath) -> Locations:
     return np.loadtxt(file, dtype=int)
 
 

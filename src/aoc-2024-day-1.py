@@ -9,8 +9,8 @@ from utils import (
     parse_args_run_and_profile,
     Locations,
     ReadingLocations,
-    read_and_parse_file,
-    np_load_data,
+    read_locations_from_file,
+    numpy_read_locations,
     sort_locations,
 )
 
@@ -55,9 +55,9 @@ def main(args: argparse.Namespace):
     read_locations: ReadingLocations
     match args.mode:
         case "numpy":
-            read_locations = np_load_data
+            read_locations = numpy_read_locations
         case _:
-            read_locations = read_and_parse_file
+            read_locations = read_locations_from_file
 
     locs: Locations = read_locations(args.file_path)
 
