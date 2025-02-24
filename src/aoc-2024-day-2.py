@@ -19,37 +19,39 @@ class EvaluateSafeCount(typing.Protocol):
     def __call__(self, reports: Reports) -> ReportsSafeCount: ...
 
 
-def evaluate_safe_count_by_functional(reports: Reports) -> ReportsSafeCount:  # noqa: C901[6]
-    safe_count: ReportsSafeCount = 0
+def count_dec_or_inc(level: int, last_level: int, dec_or_inc: typing.Optional[int]) -> int:
+    # levels decreasing and increasing in tuples
     dec = (-1, -2, -3)
     inc = (1, 2, 3)
+
+    delta: int = level - last_level
+    # find out if it is decreasing/increasing or steady level
+    if dec_or_inc is None:
+        return 1 if delta in inc else 2 if delta in dec else 0
+    else:
+        return (
+            1
+            if dec_or_inc == 1 and delta in inc
+            else (
+                2
+                if dec_or_inc == 2 and delta in dec
+                else (-1 if dec_or_inc == 1 and delta in dec else -2 if dec_or_inc == 2 and delta in inc else 0)
+            )
+        )
+
+
+def evaluate_safe_count_by_functional(reports: Reports) -> ReportsSafeCount:
+    safe_count: ReportsSafeCount = 0
     for report in reports:
-        dec_or_inc = None
-        last_level = None
+        dec_or_inc: typing.Optional[int] = None
+        last_level: typing.Optional[int] = None
         for level in report:
             if last_level is None:
                 # first round, remember the last level
                 last_level = level
                 continue
             else:
-                delta = level - last_level
-                # find out if it is decreasing/increasing or steady level
-                if dec_or_inc is None:
-                    dec_or_inc = 1 if delta in inc else 2 if delta in dec else 0
-                else:
-                    dec_or_inc = (
-                        1
-                        if dec_or_inc == 1 and delta in inc
-                        else (
-                            2
-                            if dec_or_inc == 2 and delta in dec
-                            else (
-                                -1
-                                if dec_or_inc == 1 and delta in dec
-                                else -2 if dec_or_inc == 2 and delta in inc else 0
-                            )
-                        )
-                    )
+                dec_or_inc = count_dec_or_inc(level, last_level, dec_or_inc)
             if dec_or_inc is not None and dec_or_inc <= 0:
                 # it is not safe report
                 #     0 - nor increase or decrease for current level
