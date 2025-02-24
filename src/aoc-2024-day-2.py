@@ -40,7 +40,7 @@ def count_dec_or_inc(level: int, last_level: int, dec_or_inc: typing.Optional[in
         )
 
 
-def evaluate_safe_count_by_functional(reports: Reports) -> ReportsSafeCount:
+def evaluate_safe_count_by_logical(reports: Reports) -> ReportsSafeCount:
     safe_count: ReportsSafeCount = 0
     for report in reports:
         dec_or_inc: typing.Optional[int] = None
@@ -64,6 +64,16 @@ def evaluate_safe_count_by_functional(reports: Reports) -> ReportsSafeCount:
     return safe_count
 
 
+def evaluate_safe_count_by_sets(reports: Reports) -> ReportsSafeCount:
+    safe_count: ReportsSafeCount = 0
+    report_level_diffs: set[int]
+    for report in reports:
+        report_level_diffs = {level2 - level1 for level1, level2 in zip(report, report[1:])}
+        if all(0 < diff < 4 for diff in report_level_diffs) or all(0 > diff > -4 for diff in report_level_diffs):
+            safe_count += 1
+    return safe_count
+
+
 def main(args: argparse.Namespace):
     safe_count: ReportsSafeCount
 
@@ -76,8 +86,10 @@ def main(args: argparse.Namespace):
 
     evaluate_safe_count: EvaluateSafeCount
     match args.mode:
+        case "sets":
+            evaluate_safe_count = evaluate_safe_count_by_sets
         case _:
-            evaluate_safe_count = evaluate_safe_count_by_functional
+            evaluate_safe_count = evaluate_safe_count_by_logical
 
     safe_count = evaluate_safe_count(reports)
 
@@ -91,9 +103,9 @@ if __name__ == "__main__":
     parser.add_argument("file_path", type=validate_file_path, help="Existing file path")
     parser.add_argument(
         "--mode",
-        choices=["functional"],
-        default="functional",
-        help="Mode of evaluation: functional (default: functional)",
+        choices=["logical", "sets"],
+        default="logical",
+        help="Mode of evaluation: logical (default: logical)",
     )
 
     parse_args_run_and_profile(parser, main)
