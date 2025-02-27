@@ -62,7 +62,7 @@ def read_locations_from_file(file: FilePath) -> Locations:
     _first: LocationList = []
     _second: LocationList = []
     with open(file) as file_handler:
-        for line in file_handler.readlines():
+        for line in file_handler:
             locations = list(
                 part
                 for part in (int(line_part) if bool(line_part.strip()) else None for line_part in line.split(" "))
@@ -81,7 +81,7 @@ def numpy_read_locations(file: FilePath) -> Locations:
 def read_reports_from_file(file: FilePath) -> Reports:
     reports: Reports = []
     with open(file) as file_handler:
-        for line in file_handler.readlines():
+        for line in file_handler:
             report = list(
                 level
                 for level in (int(line_part) if bool(line_part.strip()) else None for line_part in line.split(" "))
