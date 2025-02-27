@@ -48,6 +48,8 @@ Locations: typing.TypeAlias = GatheredLocations | np.typing.NDArray[np.int_]
 ReportLevel: typing.TypeAlias = int
 Report: typing.TypeAlias = list[int]
 Reports: typing.TypeAlias = list[Report]
+MemRecord: typing.TypeAlias = str
+MemRecords: typing.TypeAlias = list[MemRecord]
 
 
 class ReadingLocations(typing.Protocol):
@@ -56,6 +58,10 @@ class ReadingLocations(typing.Protocol):
 
 class ReadingReports(typing.Protocol):
     def __call__(self, file: FilePath) -> Reports: ...
+
+
+class ReadingMemRecords(typing.Protocol):
+    def __call__(self, file: FilePath) -> MemRecords: ...
 
 
 def read_locations_from_file(file: FilePath) -> Locations:
@@ -82,7 +88,7 @@ def read_reports_from_file(file: FilePath) -> Reports:
     reports: Reports = []
     with open(file) as file_handler:
         for line in file_handler:
-            report = list(
+            report: Report = list(
                 level
                 for level in (int(line_part) if bool(line_part.strip()) else None for line_part in line.split(" "))
                 if level is not None
@@ -90,6 +96,15 @@ def read_reports_from_file(file: FilePath) -> Reports:
             reports.append(report)
 
     return reports
+
+
+def read_mem_records_from_file(file: FilePath) -> MemRecords:
+    records: MemRecords = []
+    with open(file) as file_handler:
+        for line in file_handler:
+            record: MemRecord = line
+            records.append(record)
+    return records
 
 
 def sort_locations(locs: Locations):
