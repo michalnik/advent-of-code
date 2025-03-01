@@ -24,27 +24,32 @@ def simplify_record_of_memory(record: MemRecord) -> MemRecord:
     return record.replace("|", "x").replace("do()", "|").replace("!", "x").replace("don't()", "!")
 
 
-def find_enabled_pieces(record: MemRecord, flag_enabled: bool) -> tuple[MemRecords, bool]:  # noqa: C901[6]
-    enabled: MemRecords = []
-    disabled_parts: list[str] = record.split("!")
-    for idx, disabled_part in enumerate(disabled_parts):
-        enabled_parts = disabled_part.split("|")
-        if flag_enabled is True:
-            enabled += enabled_parts[:]
-        else:
-            enabled += enabled_parts[1:]
-        if idx + 1 == len(disabled_parts):
-            # it is the last piece from pieces in given record
-            if len(enabled_parts) > 1:
-                # we have a command to enable mul for next record
-                flag_enabled = True
-            elif len(disabled_parts) > 1:
-                # we have a command to disable mul for next record
-                flag_enabled = False
-        else:
-            # it is the piece from pieces, not the last of them in given record
+def count_flag_enabled(idx: int, disabled_parts: list[str], enabled_parts: list[str], flag_enabled: bool) -> bool:
+    if idx + 1 == len(disabled_parts):
+        # it is the last piece from pieces in given record
+        if len(enabled_parts) > 1:
+            # we have a command to enable mul for next record
+            flag_enabled = True
+        elif len(disabled_parts) > 1:
+            # we have a command to disable mul for next record
             flag_enabled = False
-    return enabled, flag_enabled
+    else:
+        # it is the piece from pieces, not the last of them in given record
+        flag_enabled = False
+    return flag_enabled
+
+
+def find_enabled_parts(record: MemRecord, flag_enabled: bool) -> tuple[MemRecords, bool]:
+    enabled_parts: MemRecords = []
+    disabled_pieces: list[str] = record.split("!")
+    for idx, disabled_piece in enumerate(disabled_pieces):
+        enabled_pieces = disabled_piece.split("|")
+        if flag_enabled is True:
+            enabled_parts += enabled_pieces[:]
+        else:
+            enabled_parts += enabled_pieces[1:]
+        flag_enabled = count_flag_enabled(idx, disabled_pieces, enabled_pieces, flag_enabled)
+    return enabled_parts, flag_enabled
 
 
 def add_multiplications_by_regex(records: MemRecords) -> Summary:
@@ -52,10 +57,10 @@ def add_multiplications_by_regex(records: MemRecords) -> Summary:
     flag_enabled: bool = True
     for record in records:
         record = simplify_record_of_memory(record)
-        enabled_pieces: MemRecords
-        enabled_pieces, flag_enabled = find_enabled_pieces(record, flag_enabled)
-        for one_piece in enabled_pieces:
-            for match in re.finditer(r"mul\((\d{1,3}),(\d{1,3})\)", one_piece):
+        enabled_parts: MemRecords
+        enabled_parts, flag_enabled = find_enabled_parts(record, flag_enabled)
+        for enabled_part in enabled_parts:
+            for match in re.finditer(r"mul\((\d{1,3}),(\d{1,3})\)", enabled_part):
                 left, right = match.groups()
                 summary += int(left) * int(right)
     return summary
