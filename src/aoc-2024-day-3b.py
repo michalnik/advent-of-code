@@ -26,19 +26,19 @@ def simplify_record_of_memory(record: MemRecord) -> MemRecord:
 
 def find_enabled_pieces(record: MemRecord, flag_enabled: bool) -> tuple[MemRecords, bool]:  # noqa: C901[6]
     enabled: MemRecords = []
-    pieces: list[str] = record.split("!")
-    for idx, piece in enumerate(pieces):
-        in_pieces = piece.split("|")
+    disabled_parts: list[str] = record.split("!")
+    for idx, disabled_part in enumerate(disabled_parts):
+        enabled_parts = disabled_part.split("|")
         if flag_enabled is True:
-            enabled.append(in_pieces[0])
+            enabled += enabled_parts[:]
         else:
-            enabled += in_pieces[1:]
-        if idx + 1 == len(pieces):
+            enabled += enabled_parts[1:]
+        if idx + 1 == len(disabled_parts):
             # it is the last piece from pieces in given record
-            if len(in_pieces) > 1:
+            if len(enabled_parts) > 1:
                 # we have a command to enable mul for next record
                 flag_enabled = True
-            elif len(pieces) > 1:
+            elif len(disabled_parts) > 1:
                 # we have a command to disable mul for next record
                 flag_enabled = False
         else:
