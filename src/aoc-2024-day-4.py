@@ -34,7 +34,7 @@ def is_interesting_block(block_idx: int, line_idx: int) -> bool:
     return block_idx <= line_idx
 
 
-def search_block_vertical(search_block: SearchBlock, pattern: SearchPattern) -> CountOfXmas:
+def search_block_for_xmas(search_block: SearchBlock, pattern: SearchPattern) -> CountOfXmas:
     count_of_xmas: int = 0
     try:
         for col_idx in range(len(search_block[0])):
@@ -59,9 +59,9 @@ def find_xmas_other_way(data: StreamOfLines, pattern: SearchPattern) -> CountOfX
                 search_block.append(line)
             if len(search_block) == 4:
                 # forward
-                count += search_block_vertical(search_block, pattern)
+                count += search_block_for_xmas(search_block, pattern)
                 # backward
-                count += search_block_vertical(search_block, pattern[::-1])
+                count += search_block_for_xmas(search_block, pattern[::-1])
                 stack[block_idx] = []
     return count
 
