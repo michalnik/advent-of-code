@@ -50,6 +50,7 @@ Report: typing.TypeAlias = list[int]
 Reports: typing.TypeAlias = list[Report]
 MemRecord: typing.TypeAlias = str
 MemRecords: typing.TypeAlias = list[MemRecord]
+StreamOfLines: typing.TypeAlias = typing.Iterator[str]
 
 
 class ReadingLocations(typing.Protocol):
@@ -62,6 +63,10 @@ class ReadingReports(typing.Protocol):
 
 class ReadingMemRecords(typing.Protocol):
     def __call__(self, file: FilePath) -> MemRecords: ...
+
+
+class OpenStreamOfLines(typing.Protocol):
+    def __call__(self, file: FilePath) -> StreamOfLines: ...
 
 
 def read_locations_from_file(file: FilePath) -> Locations:
@@ -105,6 +110,11 @@ def read_mem_records_from_file(file: FilePath) -> MemRecords:
             record: MemRecord = line
             records.append(record)
     return records
+
+
+def open_stream_of_lines(file: FilePath) -> StreamOfLines:
+    with open(file) as file_handler:
+        yield from file_handler
 
 
 def sort_locations(locs: Locations):

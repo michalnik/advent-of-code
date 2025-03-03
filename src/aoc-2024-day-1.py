@@ -82,7 +82,7 @@ if __name__ == "__main__":
         "--mode",
         choices=["comprehension", "functional", "numpy"],
         default="comprehension",
-        help="Mode of evaluation: comprehension, functional or numpy (default: comprehension)",
+        help="Mode of evaluation",
     )
 
     parse_args_run_and_profile(parser, main)

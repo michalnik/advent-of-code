@@ -66,7 +66,7 @@ if __name__ == "__main__":
         "--mode",
         choices=["numpy", "count"],
         default="numpy",
-        help="Mode of evaluation: numpy (default: numpy)",
+        help="Mode of evaluation",
     )
 
     parse_args_run_and_profile(parser, main)

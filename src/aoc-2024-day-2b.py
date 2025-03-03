@@ -59,7 +59,7 @@ if __name__ == "__main__":
         "--mode",
         choices=["sets"],
         default="sets",
-        help="Mode of evaluation: sets (default: sets)",
+        help="Mode of evaluation",
     )
 
     parse_args_run_and_profile(parser, main)

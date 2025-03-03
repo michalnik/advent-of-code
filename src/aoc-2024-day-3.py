@@ -57,7 +57,7 @@ if __name__ == "__main__":
         "--mode",
         choices=["regex"],
         default="regex",
-        help="Mode of summary: regex",
+        help="Mode of summary",
     )
 
     parse_args_run_and_profile(parser, main)

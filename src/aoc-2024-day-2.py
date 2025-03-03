@@ -105,7 +105,7 @@ if __name__ == "__main__":
         "--mode",
         choices=["logical", "sets"],
         default="logical",
-        help="Mode of evaluation: logical (default: logical)",
+        help="Mode of evaluation",
     )
 
     parse_args_run_and_profile(parser, main)
