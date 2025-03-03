@@ -69,6 +69,10 @@ class OpenStreamOfLines(typing.Protocol):
     def __call__(self, file: FilePath) -> StreamOfLines: ...
 
 
+class CreateStreamOfLines(typing.Protocol):
+    def __call__(self, file: FilePath) -> typing.Iterator[StreamOfLines]: ...
+
+
 def read_locations_from_file(file: FilePath) -> Locations:
     _first: LocationList = []
     _second: LocationList = []
@@ -115,6 +119,11 @@ def read_mem_records_from_file(file: FilePath) -> MemRecords:
 def open_stream_of_lines(file: FilePath) -> StreamOfLines:
     with open(file) as file_handler:
         yield from file_handler
+
+
+def create_stream_of_lines(file: FilePath) -> typing.Iterator[StreamOfLines]:
+    while True:
+        yield open_stream_of_lines(file)
 
 
 def sort_locations(locs: Locations):

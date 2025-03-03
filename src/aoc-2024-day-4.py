@@ -7,8 +7,8 @@ from utils import (
     validate_file_path,
     parse_args_run_and_profile,
     StreamOfLines,
-    OpenStreamOfLines,
     open_stream_of_lines,
+    create_stream_of_lines,
 )
 
 
@@ -39,36 +39,32 @@ def find_xmas_diagonal(data: StreamOfLines) -> CountOfXmas:
     return count
 
 
-def find_xmas_all(data: StreamOfLines) -> CountOfXmas:
+def find_xmas_all(data: typing.Iterator[StreamOfLines]) -> CountOfXmas:
     count: int = 0
-    count += find_xmas_horizontal(data)
-    count += find_xmas_vertical(data)
-    count += find_xmas_diagonal(data)
+    count += find_xmas_horizontal(next(data))
+    count += find_xmas_vertical(next(data))
+    count += find_xmas_diagonal(next(data))
     return count
 
 
 def main(args: argparse.Namespace):
     summary_of_count_of_xmas: CountOfXmas
 
-    get_stream_of_lines: OpenStreamOfLines
     match args.mode:
+        case "horizontal" | "vertical" | "diagonal":
+            stream_of_lines: StreamOfLines = open_stream_of_lines(args.file_path)
+            sum_count_of_xmas: SumCountOfXmas
+            match args.mode:
+                case "horizontal":
+                    sum_count_of_xmas = find_xmas_horizontal
+                case "vertical":
+                    sum_count_of_xmas = find_xmas_vertical
+                case _:
+                    # diagonal
+                    sum_count_of_xmas = find_xmas_diagonal
+            summary_of_count_of_xmas = sum_count_of_xmas(stream_of_lines)
         case _:
-            get_stream_of_lines = open_stream_of_lines
-
-    stream_of_lines: StreamOfLines = get_stream_of_lines(args.file_path)
-
-    sum_count_of_xmas: SumCountOfXmas
-    match args.mode:
-        case "horizontal":
-            sum_count_of_xmas = find_xmas_horizontal
-        case "vertical":
-            sum_count_of_xmas = find_xmas_vertical
-        case "diagonal":
-            sum_count_of_xmas = find_xmas_diagonal
-        case _:
-            sum_count_of_xmas = find_xmas_all
-
-    summary_of_count_of_xmas = sum_count_of_xmas(stream_of_lines)
+            summary_of_count_of_xmas = find_xmas_all(create_stream_of_lines(args.file_path))
 
     print(f"Summary of multiplications added by <{args.mode}>: ", summary_of_count_of_xmas)
 
