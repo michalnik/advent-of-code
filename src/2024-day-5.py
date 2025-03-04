@@ -71,16 +71,46 @@ class UPDATE:
                 correct = False
         return correct
 
+    def make_correct(self, page: int, rule: RULE):
+        position: int = self.update.index(page)
+        if rule.after and rule.after in self.update[:position]:
+            self.update.remove(rule.after)
+            self.update.insert(position + 2, rule.after)
+        position = self.update.index(page)
+        if rule.before and rule.before in self.update[position:]:
+            self.update.remove(rule.before)
+            self.update.insert(position, rule.before)
+
     def find_middle_page_number(self) -> int:
         middle: int = math.floor(len(self.update) / 2)
         return self.update[middle]
+
+    def correct(self, rules: RULES):
+        page_rules: list[RULE]
+        while not self.is_correct(rules):
+            for page in self.update:
+                page_rules = rules.find_rules(page)
+                for rule in page_rules:
+                    if not self.is_correct_rule(page, rule):
+                        self.make_correct(page, rule)
 
 
 class AddingUpMiddlePageNumbersOfCorrectlyOrderedUpdates(typing.Protocol):
     def __call__(self, stream: typing.Iterator[StreamOfLines]) -> SUMMARY: ...
 
 
-def add_up_middle_page_numbers(stream: typing.Iterator[StreamOfLines]) -> SUMMARY:
+def find_middle_page_number(update: UPDATE, rules: RULES, add_mode: str) -> SUMMARY:
+    summary: SUMMARY = 0
+    correct_update: bool = update.is_correct(rules)
+    if correct_update and add_mode == "correct":
+        summary += update.find_middle_page_number()
+    elif not correct_update and add_mode == "incorrect":
+        update.correct(rules)
+        summary += update.find_middle_page_number()
+    return summary
+
+
+def add_up_middle_page_numbers(stream: typing.Iterator[StreamOfLines], add_mode: str = "correct") -> SUMMARY:
     summary: SUMMARY = 0
     is_rule: bool = True
     rules: RULES = RULES(rules=[])
@@ -93,10 +123,15 @@ def add_up_middle_page_numbers(stream: typing.Iterator[StreamOfLines]) -> SUMMAR
         if is_rule:
             rules.add_rule_from_line(line)
         else:
-            # it is update
+            # it is an update line now
             update = UPDATE(line=line)
-            if update.is_correct(rules):
-                summary += update.find_middle_page_number()
+            summary += find_middle_page_number(update, rules, add_mode)
+    return summary
+
+
+def add_up_middle_page_numbers_incorrect(stream: typing.Iterator[StreamOfLines]) -> SUMMARY:
+    summary: SUMMARY = 0
+    summary += add_up_middle_page_numbers(stream, add_mode="incorrect")
     return summary
 
 
@@ -105,6 +140,8 @@ def main(args: argparse.Namespace):
 
     adding_up_middle_page_numbers: AddingUpMiddlePageNumbersOfCorrectlyOrderedUpdates
     match args.mode:
+        case "incorrect":
+            adding_up_middle_page_numbers = add_up_middle_page_numbers_incorrect
         case _:
             adding_up_middle_page_numbers = add_up_middle_page_numbers
 
@@ -120,9 +157,9 @@ if __name__ == "__main__":
     parser.add_argument("file_path", type=validate_file_path, help="Existing file path")
     parser.add_argument(
         "--mode",
-        choices=["default"],
-        default="default",
-        help="Mode of adding",
+        choices=["correct", "incorrect"],
+        default="correct",
+        help="Mode of adding (from correctly/incorrectly ordered updates",
     )
 
     parse_args_run_and_profile(parser, main)
