@@ -110,7 +110,7 @@ def main(args: argparse.Namespace):
 
     summary_of_count_of_xmas = sum_count_of_xmas(create_stream_of_lines(args.file_path))
 
-    print(f"Summary of multiplications added by <{args.mode}>: ", summary_of_count_of_xmas)
+    print(f"Count of X-MAS calculated by mode <{args.mode}>: ", summary_of_count_of_xmas)
 
 
 if __name__ == "__main__":
