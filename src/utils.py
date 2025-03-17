@@ -9,7 +9,7 @@ import numpy as np
 
 
 def create_arg_parser(description: str) -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(description=description)
+    parser = argparse.ArgumentParser(description=description, formatter_class=argparse.RawTextHelpFormatter)
     parser.add_argument("--rows", type=int, default=10, help="Number of rows of profiler stats to print")
     return parser
 
