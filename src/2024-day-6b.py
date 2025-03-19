@@ -13,11 +13,11 @@ from utils import (
 CountOfPositions: typing.TypeAlias = int
 Grid: typing.TypeAlias = list[list[str]]
 Coords: typing.TypeAlias = tuple[int, int]
-Direction: typing.TypeAlias = str
-Directions: typing.TypeAlias = list[str]
+Direction: typing.TypeAlias = typing.Literal["N", "E", "S", "W"]
+Directions: typing.TypeAlias = list[Direction]
 
 
-POSSIBLE_DIRECTIONS: Directions = ["N", "E", "S", "W"]
+POSSIBLE_DIRECTIONS: Directions = list(typing.get_args(Direction))
 
 
 class Rules(typing.Protocol):
