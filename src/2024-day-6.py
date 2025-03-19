@@ -19,7 +19,7 @@ Direction: typing.TypeAlias = str
 Directions: typing.TypeAlias = list[str]
 
 
-POSSIBLE_DIRECTIONS = ["N", "E", "S", "W"]
+POSSIBLE_DIRECTIONS: Directions = ["N", "E", "S", "W"]
 
 
 class Rules(typing.Protocol):
@@ -35,7 +35,7 @@ class AddUpCountOfDistinctPositionsInThePath(typing.Protocol):
 
 
 def load_grid(stream: StreamOfLines) -> Grid:
-    return list([letter for letter in line] for line in stream)
+    return list([letter for letter in line.strip()] for line in stream)
 
 
 def find_letter_in_line(row_idx: int, row: list[str], letter: str = "^") -> Coords | None:
