@@ -18,6 +18,7 @@ Directions: typing.TypeAlias = list[Direction]
 
 
 POSSIBLE_DIRECTIONS: Directions = list(typing.get_args(Direction))
+VISUALIZE_TIME_LOOP: dict[str, str] = {"N": "^", "S": "v", "W": "<", "E": ">"}
 
 
 class Rules(typing.Protocol):
@@ -89,23 +90,40 @@ def get_next_guard_step(current_coords: Coords, next_coords: Coords, next_letter
             return next_coords
 
 
-def found_nearest_checkpoint(grid: Grid, coords: Coords, direction: Direction) -> bool:  # noqa: [C901]
-    next_coords: Coords = coords
-    next_direction: Direction = get_next_direction(direction, "#")
-    while True:
-        try:
-            next_coords = get_next_coords(grid, next_coords, next_direction)
-        except ValueError as exc:
-            print("Out of grid:", exc)
-            return False
+def stuck_in_loop(search_area: Grid, coords: Coords, direction: Direction) -> bool:
+    if search_area[coords[0]][coords[1]] == VISUALIZE_TIME_LOOP[direction]:
+        # meet time loop path again
+        return True
+    return False
 
-        match grid[next_coords[0]][next_coords[1]]:
-            case "+":
-                return True
+
+def found_time_loop(grid: Grid, coords: Coords, direction: Direction) -> bool:  # noqa: [C901]
+    search_area: Grid = [[letter for letter in line] for line in grid]
+    next_coords: Coords
+    loop_counter: int = 0
+    while True:
+        loop_counter += 1
+        if loop_counter > 7500:
+            print(f"Found complex time loop at {coords}")
+            return True
+        try:
+            next_coords = get_next_coords(search_area, coords, direction)
+        except ValueError as exc:
+            print(f"Searching time loop ends up out of grid: {exc}")
+            # out of grid: there is no possibility to return back
+            return False
+        match search_area[next_coords[0]][next_coords[1]]:
             case "#":
-                return False
+                direction = get_next_direction(direction, "#")
             case _:
-                continue
+                coords = next_coords
+        if stuck_in_loop(search_area, coords, direction):
+            print(f"Found simple time loop at {coords}")
+            return True
+        else:
+            # record move to find loop
+            search_area[coords[0]][coords[1]] = VISUALIZE_TIME_LOOP[direction]
+            continue
 
 
 def default_rules(
@@ -116,8 +134,13 @@ def default_rules(
     next_direction: Direction = get_next_direction(direction, next_letter)
     next_guard_step: Coords = get_next_guard_step(coords, probably_next_coords, next_letter)
     mark_of_path: str = get_mark_of_path(next_direction, next_letter)
-    if next_letter != "#" and found_nearest_checkpoint(grid, probably_next_coords, next_direction) is True:
-        count_of_new_blocks += 1
+    if next_letter not in ["#", "^", "+", "|", "-"]:
+        # place single obstacle
+        grid[probably_next_coords[0]][probably_next_coords[1]] = "#"
+        if found_time_loop(grid, coords, get_next_direction(direction, "#")):
+            count_of_new_blocks += 1
+        # restore original letter
+        grid[probably_next_coords[0]][probably_next_coords[1]] = next_letter
     # mark the path
     grid[next_guard_step[0]][next_guard_step[1]] = mark_of_path
     return next_guard_step, next_direction, count_of_new_blocks

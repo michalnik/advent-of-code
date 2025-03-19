@@ -71,6 +71,8 @@ def store_grid(grid: Grid, tmp_file: FilePath):
         for row in grid:
             for col in row:
                 file_handler.write(col)
+            else:
+                file_handler.write("\n")
 
 
 def predict_guard_movements_by_default(
