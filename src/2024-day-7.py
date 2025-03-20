@@ -13,7 +13,7 @@ from utils import (
 
 
 SummaryOfPassed: typing.TypeAlias = int
-Operator: typing.TypeAlias = typing.Literal["+", "*"]
+Operator: typing.TypeAlias = typing.Literal["+", "*", "||"]
 
 
 POSSIBLE_OPERATORS: list[str] = list(typing.get_args(Operator))
@@ -27,14 +27,35 @@ class AddingUpEquations(typing.Protocol):
     def __call__(self, stream: typing.Iterator[StreamOfLines], test_equation: EquationPass) -> SummaryOfPassed: ...
 
 
-def equation_pass(line: str) -> SummaryOfPassed:
+def equation_pass_by_default(line: str) -> SummaryOfPassed:
     summary: SummaryOfPassed = 0
     left_side, numbers = line.split(":")
     args: list[int] = [int(arg) for arg in numbers.split(" ") if arg != ""]
-    products: itertools.product[tuple[str, ...]] = itertools.product(["+", "*"], repeat=len(args) - 1)
+    products: itertools.product[tuple[str, ...]] = itertools.product(POSSIBLE_OPERATORS[:2], repeat=len(args) - 1)
     for product in products:
         right_side: int = functools.reduce(
             lambda res, params: res + params[0] if params[1] == "+" else res * params[0],
+            zip(args[1:], product),
+            args[0],
+        )
+        if int(left_side) == right_side:
+            summary += right_side
+            break
+    return summary
+
+
+def equation_pass_by_all(line: str) -> SummaryOfPassed:
+    summary: SummaryOfPassed = 0
+    left_side, numbers = line.split(":")
+    args: list[int] = [int(arg) for arg in numbers.split(" ") if arg != ""]
+    products: itertools.product[tuple[str, ...]] = itertools.product(POSSIBLE_OPERATORS, repeat=len(args) - 1)
+    for product in products:
+        right_side: int = functools.reduce(
+            lambda res, params: (
+                res + params[0]
+                if params[1] == "+"
+                else res * params[0] if params[1] == "*" else int(f"{res}{params[0]}")
+            ),
             zip(args[1:], product),
             args[0],
         )
@@ -60,8 +81,11 @@ def main(args: argparse.Namespace):
     adding_up_equations: AddingUpEquations
     test_equation: EquationPass
     match args.mode:
+        case "all":
+            test_equation = equation_pass_by_all
+            adding_up_equations = adding_up_equations_by_default
         case _:
-            test_equation = equation_pass
+            test_equation = equation_pass_by_default
             adding_up_equations = adding_up_equations_by_default
 
     summary_of_passed += adding_up_equations(stream, test_equation)
@@ -78,7 +102,7 @@ if __name__ == "__main__":
     parser.add_argument("file_path", type=validate_file_path, help="Existing file path")
     parser.add_argument(
         "--mode",
-        choices=["default"],
+        choices=["default", "all"],
         default="default",
         help="Mode of solving these problems",
     )
