@@ -8,5 +8,5 @@ Solutions are simply in `src` folder and modules are called like
 advent_year = 2024
 advent_day = 1
 
-module_name = f"aoc-{advent_year}-day-{advent_day}"
+module_name = f"{advent_year}-day-{advent_day}"
 ```
