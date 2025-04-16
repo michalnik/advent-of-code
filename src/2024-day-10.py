@@ -1,6 +1,14 @@
 import typing
+import sys
 import uuid
+import logging
 from dataclasses import dataclass, field
+
+
+logging.basicConfig(level=logging.WARNING, handlers=[logging.StreamHandler(sys.stdout)])
+
+
+log = logging.getLogger(__name__)
 
 
 FilePath: typing.TypeAlias = str
@@ -22,17 +30,25 @@ read_char: OpenStream = stream_opener
 
 @dataclass
 class Point:
-    lat: int
-    long: int
+    id: uuid.UUID = field(default_factory=uuid.uuid4)
+    lat: int = 0
+    long: int = 0
     height: int = 0
     trailhead: bool = False
     peaks: list["Point"] = field(default_factory=list)
+    trails: list["Trail"] = field(default_factory=list)
 
     def add_peak(self, peak: "Point"):
         if self.trailhead is False:
             self.trailhead = True
         if peak not in self.peaks:
             self.peaks.append(peak)
+
+    def add_trail(self, trail: "Trail"):
+        if self.trailhead is False:
+            self.trailhead = True
+        if trail not in self.trails:
+            self.trails.append(trail)
 
 
 @dataclass
@@ -81,6 +97,14 @@ class Map:
                     score += len(point.peaks)
         return score
 
+    def count_rating(self) -> int:
+        rating = 0
+        for row in self.rows:
+            for point in row.points:
+                if point.trailhead is True:
+                    rating += len(point.trails)
+        return rating
+
     def add_row(self, row: Row):
         self.rows.append(row)
 
@@ -121,8 +145,8 @@ class Map:
             point: Point = point_getter(trailhead)
             trail.add_point(trailhead)
             trail.add_point(point)
-        except ValueError as exc:
-            print(exc)
+        except ValueError:
+            log.info(f"Cannot add new trail for trailhead: {trailhead.id}.")
         else:
             self.add_trail(trail)
 
@@ -160,8 +184,8 @@ class Trail:
                     new_trail: Trail = Trail(path=list(self.path))
                     new_trail.add_point(next_point)
                     trail_map.add_trail(new_trail)
-            except ValueError as exc:
-                print(exc)
+            except ValueError:
+                log.info("Cannot find next point.")
         if next_points:
             return next_points[0]
         return None
@@ -174,8 +198,8 @@ class Trail:
             while next_point := self.next_point(trail_map, last_point):
                 self.add_point(next_point)
                 last_point = next_point
-        except ValueError as exc:
-            print(exc)
+        except ValueError:
+            log.info(f"Finding way is over, last point is {last_point.id}.")
 
     def add_point(self, point: Point):
         self.__validate_point(point)
@@ -197,6 +221,7 @@ class Trail:
         if point.height == 9:
             trailhead: Point = self.path[0]
             trailhead.add_peak(point)
+            trailhead.add_trail(self)
 
 
 if __name__ == "__main__":
@@ -211,3 +236,4 @@ if __name__ == "__main__":
 
     print(open(file_path).read())
     print("Score: ", trail_map.count_score())
+    print("Rating: ", trail_map.count_rating())
